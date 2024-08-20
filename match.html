@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Matching Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            grid-template-rows: repeat(4, 100px);
+            gap: 10px;
+        }
+        .card {
+            width: 100px;
+            height: 100px;
+            background-color: #dddddd;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        .card img {
+            width: 76px;
+            height: 44px;
+            display: none;
+            border-radius: 5px;
+        }
+        .matched {
+            background-color: #aaffaa;
+        }
+    </style>
+</head>
+<body>
+
+<div id="gameBoard"></div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        var images = [
+            'image1', 'image2', 'image3', 'image4', 
+            'image5', 'image6', 'image7', 'image8',
+            'image1', 'image2', 'image3', 'image4', 
+            'image5', 'image6', 'image7', 'image8'
+        ];
+
+        var flippedCards = [];
+        var matchedCount = 0;
+
+        // 이미지를 섞기
+        images = images.sort(function() { return 0.5 - Math.random(); });
+
+        // 카드 생성
+        images.forEach(function(image, index) {
+            var card = $('<div class="card" data-image="'+image+'"><img src="images/'+image+'.png" alt="'+image+'"></div>');
+            $('#gameBoard').append(card);
+        });
+
+        // 카드 클릭 이벤트
+        $('.card').on('click', function() {
+            if (flippedCards.length < 2 && !$(this).hasClass('matched') && !$(this).find('img').is(':visible')) {
+                $(this).find('img').fadeIn(200);
+                flippedCards.push($(this));
+
+                if (flippedCards.length === 2) {
+                    setTimeout(checkMatch, 500);
+                }
+            }
+        });
+
+        // 카드 일치 여부 확인
+        function checkMatch() {
+            var card1 = flippedCards[0];
+            var card2 = flippedCards[1];
+
+            if (card1.data('image') === card2.data('image')) {
+                card1.addClass('matched');
+                card2.addClass('matched');
+                matchedCount += 2;
+
+                if (matchedCount === images.length) {
+                    alert('모든 그림을 맞췄습니다!');
+                }
+            } else {
+                card1.find('img').fadeOut(200);
+                card2.find('img').fadeOut(200);
+            }
+
+            flippedCards = [];
+        }
+    });
+</script>
+
+</body>
+</html>

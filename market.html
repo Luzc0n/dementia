@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Sequence Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #sequenceDisplay {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        #gameArea {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #countdown {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .button {
+            padding: 10px 20px;
+            font-size: 18px;
+            margin: 10px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        #popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 10px;
+            text-align: center;
+        }
+        #popup button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div id="sequenceDisplay"></div>
+
+<div id="gameArea">
+    <div id="countdown">10</div>
+    <div id="buttonsArea">
+        <button class="button" data-value="A">A</button>
+        <button class="button" data-value="B">B</button>
+        <button class="button" data-value="C">C</button>
+        <button class="button" data-value="D">D</button>
+        <button class="button" data-value="E">E</button>
+    </div>
+</div>
+
+<div id="popup">
+    <p id="popupMessage"></p>
+    <button id="restartButton">다시 시작</button>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        var levels = [
+            { time: 10, count: 3 },
+            { time: 7, count: 4 },
+            { time: 5, count: 5 }
+        ];
+        var currentLevel = 0;
+        var userSequence = [];
+        var correctSequence = [];
+        var timer;
+
+        function startGame() {
+            userSequence = [];
+            correctSequence = generateSequence(levels[currentLevel].count);
+            displaySequence(correctSequence);
+            startTimer(levels[currentLevel].time);
+        }
+
+        // 랜덤 시퀀스 생성
+        function generateSequence(count) {
+            var allButtons = ['A', 'B', 'C', 'D', 'E'];
+            var sequence = [];
+
+            while (sequence.length < count) {
+                var randomIndex = Math.floor(Math.random() * allButtons.length);
+                var selectedValue = allButtons[randomIndex];
+                if (!sequence.includes(selectedValue)) {
+                    sequence.push(selectedValue);
+                }
+            }
+
+            return sequence;
+        }
+
+        // 위쪽에 시퀀스 표시
+        function displaySequence(sequence) {
+            $('#sequenceDisplay').text('순서: ' + sequence.join(', '));
+        }
+
+        // 타이머 시작
+        function startTimer(time) {
+            clearInterval(timer);
+            var countdown = time;
+            $('#countdown').text(countdown);
+            timer = setInterval(function() {
+                countdown--;
+                $('#countdown').text(countdown);
+                if (countdown <= 0) {
+                    clearInterval(timer);
+                    gameOver('시간이 초과되었습니다!');
+                }
+            }, 1000);
+        }
+
+        // 사용자가 클릭할 때 시퀀스 확인
+        $('.button').on('click', function() {
+            var selectedValue = $(this).data('value');
+            userSequence.push(selectedValue);
+            checkSequence();
+        });
+
+        // 시퀀스 확인
+        function checkSequence() {
+            for (var i = 0; i < userSequence.length; i++) {
+                if (userSequence[i] !== correctSequence[i]) {
+                    gameOver('잘못된 버튼을 눌렀습니다!');
+                    return;
+                }
+            }
+
+            if (userSequence.length === correctSequence.length) {
+                clearInterval(timer);
+                currentLevel++;
+                if (currentLevel >= levels.length) {
+                    showPopup('성공했습니다!');
+                } else {
+                    startGame();
+                }
+            }
+        }
+
+        // 게임 종료 처리
+        function gameOver(message) {
+            showPopup(message);
+            currentLevel = 0;
+        }
+
+        // 팝업 표시
+        function showPopup(message) {
+            $('#popupMessage').text(message);
+            $('#popup').fadeIn();
+        }
+
+        // 팝업 닫기 및 게임 재시작
+        $('#restartButton').on('click', function() {
+            $('#popup').fadeOut(function() {
+                startGame();
+            });
+        });
+
+        startGame();
+    });
+</script>
+
+</body>
+</html>

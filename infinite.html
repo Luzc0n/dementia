@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect the Dots Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        #gameArea {
+            position: relative;
+            width: 700px;
+            height: 700px;
+            background-image: url('images/infinite.png');
+            border: 2px solid #000000;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            border: 2px solid #000000;
+        }
+        #popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 10px;
+            text-align: center;
+        }
+        #popup button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div id="gameArea">
+    <canvas id="drawingCanvas"></canvas>
+</div>
+
+<div id="popup">
+    <p>클리어 했습니다!</p>
+    <button id="closePopup">닫기</button>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        var canvas = document.getElementById('drawingCanvas');
+        var ctx = canvas.getContext('2d');
+        var drawing = false;
+        var points = [];
+        var path = [];
+
+        canvas.width = 700;
+        canvas.height = 700;
+
+        // 점의 위치 설정 (무한대 모양)
+        function generatePoints() {
+            var centerX = canvas.width / 2;
+            var centerY = canvas.height / 2;
+            var majorRadius = 250; // 큰 원의 반지름
+            var minorRadius = 100; // 작은 원의 반지름
+            var numPoints = 8;
+            var angleOffset = Math.PI / 8; // 각 점의 간격 조정
+
+            // 큰 원의 위쪽
+            for (var i = 0; i < numPoints / 2; i++) {
+                var angle = angleOffset + i * 2 * Math.PI / (numPoints / 2);
+                var x = centerX + majorRadius * Math.cos(angle);
+                var y = centerY - minorRadius * Math.sin(angle);
+                points.push({x: x, y: y});
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                ctx.fillStyle = '#ebebeb';
+                ctx.fill();
+            }
+
+            // 큰 원의 아래쪽
+            for (var i = 0; i < numPoints / 2; i++) {
+                var angle = angleOffset + i * 2 * Math.PI / (numPoints / 2);
+                var x = centerX + majorRadius * Math.cos(angle);
+                var y = centerY + minorRadius * Math.sin(angle);
+                points.push({x: x, y: y});
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                ctx.fillStyle = '#ebebeb';
+                ctx.fill();
+            }
+        }
+
+        generatePoints();
+
+        // 마우스 또는 터치 시작 시
+        canvas.addEventListener('mousedown', function(e) {
+            drawing = true;
+            path = [];
+            addPoint(e);
+        });
+
+        // 마우스 또는 터치 이동 시
+        canvas.addEventListener('mousemove', function(e) {
+            if (drawing) {
+                addPoint(e);
+                drawPath();
+                checkIfAllPointsConnected();
+            }
+        });
+
+        // 마우스 또는 터치 끝 시
+        canvas.addEventListener('mouseup', function() {
+            drawing = false;
+        });
+
+        // 터치 시작 시
+        canvas.addEventListener('touchstart', function(e) {
+            drawing = true;
+            path = [];
+            addPoint(e.touches[0]);
+        });
+
+        canvas.addEventListener('touchmove', function(e) {
+            if (drawing) {
+                addPoint(e.touches[0]);
+                drawPath();
+                checkIfAllPointsConnected();
+                e.preventDefault();
+            }
+        });
+
+        canvas.addEventListener('touchend', function() {
+            drawing = false;
+        });
+
+        // 좌표 추가 및 경로 그리기
+        function addPoint(e) {
+            var rect = canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            path.push({x: x, y: y});
+        }
+
+        function drawPath() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            generatePoints(); // 점을 다시 그리기
+            ctx.beginPath();
+            ctx.moveTo(path[0].x, path[0].y);
+            for (var i = 1; i < path.length; i++) {
+                ctx.lineTo(path[i].x, path[i].y);
+            }
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 10;
+            ctx.lineJoin = 'round'; // 선의 교차 부분을 둥글게
+            ctx.lineCap = 'round'; // 선의 끝부분을 둥글게
+            ctx.stroke();
+        }
+
+        // 모든 점이 연결되었는지 확인
+        function checkIfAllPointsConnected() {
+            var connectedPoints = new Set();
+            for (var i = 0; i < path.length; i++) {
+                for (var j = 0; j < points.length; j++) {
+                    var dist = Math.sqrt(Math.pow(path[i].x - points[j].x, 2) + Math.pow(path[i].y - points[j].y, 2));
+                    if (dist < 15) {
+                        connectedPoints.add(j);
+                    }
+                }
+            }
+
+            if (connectedPoints.size === points.length) {
+                $('#popup').fadeIn();
+            }
+        }
+
+        // 팝업 닫기 버튼 클릭 시 팝업 닫기
+        $('#closePopup').on('click', function() {
+            $('#popup').fadeOut();
+        });
+    });
+</script>
+
+</body>
+</html>
